@@ -12,8 +12,15 @@ function VideoUpload() {
         title: "",
         description: ""
     });
+
     const [uploading, setUploading] = useState(false);
     const [message, setMessage] = useState("");
+
+    function formFieldChange(event) {
+        setMeta({
+            ...meta, [event.target.name]: event.target.value
+        });
+    }
 
     function handleFileChange(event) {
         setSelectedFile(event.target.files[0])
@@ -21,9 +28,41 @@ function VideoUpload() {
     }
 
     function handleForm(formEvent) {
-        console.log(formEvent.target);
-        formEvent.preventDefault();
+        if (!selectedFile) {
+            alert("Select File!!");
+            return;
+        }
     }
+
+    //submit file to server
+
+    async function saveVideoToServer(video, videoMetaData) {
+        setUploading(true);
+
+        try {
+            let response = await axios.post(`https://localhost:8080/videos`, formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+
+                onUploadProgress: (progressEvent) => {
+                    const total = progressEvent.total;
+                    const currentProgress = Math.round(
+                        (progressEvent.loaded * 100) / total
+                    );
+                    // setProgress(currentProgress);
+                }
+
+            });
+            setMessage("File uploaded successfully!");
+            console.log(response.data);
+        }
+        catch (error) {
+
+        }
+    }
+
+
 
     return <div className="text-white">
         <Card className="flex justify-center ">
@@ -41,27 +80,27 @@ function VideoUpload() {
                         <div className="pb-2 block">
                             <Label htmlFor="file-upload" value="Upload file" />
                         </div>
-                        <TextInput name="title" id="file-upload" placeholder="Enter title" />
+                        <TextInput onChange={formFieldChange} name="title" id="file-upload" placeholder="Enter title" />
                     </div>
 
                     {/* textarea */}
                     <div className="mb-3 max-w-md">
-                        <div className="pb-2 block">
+                        <div className="mb-2 block">
                             <Label htmlFor="comment" value="Video Description" />
                         </div>
-                        <Textarea name="description" id="comment" placeholder="write a video description" required rows={4} />
+                        <Textarea onChange={formFieldChange} name="description" id="comment" placeholder="write a video description" required rows={4} />
                     </div>
 
                     <div className="flex justify-center  items-center space-x-6">
-                        <div class="shrink-0">
-                            <img class="h-16 w-16 object-cover rounded-sm" src={videoLogo} alt="Current profile photo" />
+                        <div className="shrink-0">
+                            <img className="h-16 w-16 object-cover rounded-sm" src={videoLogo} alt="Current profile photo" />
                         </div>
 
-                        <label class="block">
-                            <span class="sr-only">Choose profile photo</span>
+                        <label className="block">
+                            <span className="sr-only">Choose profile photo</span>
                             <input name="file" type="file"
                                 onChange={handleFileChange}
-                                class="block w-full text-sm text-slate-500
+                                className="block w-full text-sm text-slate-500
                             file:mr-4 file:py-2 file:px-4
                             file:rounded-full file:border-0
                             file:text-sm file:font-semibold
@@ -69,8 +108,9 @@ function VideoUpload() {
                              hover:file:bg-violet-100"/>
                         </label>
                     </div>
+
                     <div className="flex justify-center">
-                        <Button onClick={handleForm}>
+                        <Button type="submit">
                             Upload Video</Button>
                     </div>
                 </form>
