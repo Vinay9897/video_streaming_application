@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import videoLogo from "../assets/upload.png";
-import { Alert, Card, FileInput, Label, Progress, Textarea, TextInput } from "flowbite-react";
+import { Card, FileInput, Label, Textarea, TextInput } from "flowbite-react";
 import { Button } from "flowbite-react";
-import axios from "axios";
-import toast from "react-hot-toast";
+
 
 function VideoUpload() {
 
@@ -18,80 +17,53 @@ function VideoUpload() {
     const [message, setMessage] = useState("");
 
     function formFieldChange(event) {
-
         setMeta({
             ...meta, [event.target.name]: event.target.value
         });
-
-        // console.log(meta.description);
-        // console.log(meta.title)
     }
 
     function handleFileChange(event) {
         setSelectedFile(event.target.files[0])
+        console.log(event);
     }
 
     function handleForm(formEvent) {
-        formEvent.preventDefault();
         if (!selectedFile) {
             alert("Select File!!");
             return;
         }
-
-        const formData = new FormData();
-        formData.append("file", selectedFile);
-        formData.append("title", meta.title);
-        formData.append("description", meta.description);
-        saveVideoToServer(formData);
-        // resetForm();
-    }
-
-    // reset form
-
-    function resetForm() {
-
-        setMeta({
-            title: "",
-            description: ""
-        });
-        setSelectedFile(null);
-        setUploading(false);
-
     }
 
     //submit file to server
 
-    async function saveVideoToServer(formData) {
+    async function saveVideoToServer(video, videoMetaData) {
         setUploading(true);
+
         try {
-            let response = await axios.post(`http://localhost:8080/app/videos`, formData, {
+            let response = await axios.post(`https://localhost:8080/videos`, formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
 
                 onUploadProgress: (progressEvent) => {
                     const total = progressEvent.total;
-
                     const currentProgress = Math.round(
                         (progressEvent.loaded * 100) / total
                     );
-                    setProgress(currentProgress);
+                    // setProgress(currentProgress);
                 }
+
             });
             setMessage("File uploaded successfully!");
-            setUploading(false);
-            console.log(response);
-            toast.success("File uploaded successfully!");
-            resetForm();
+            console.log(response.data);
         }
         catch (error) {
-            console.log(error);
-            console.log("error in uploading file");
-            setUploading(false);
-            toast.error("File uploaded successfully!");
-        }
 
+        }
     }
+
+
+
     return <div className="text-white">
         <Card className="flex justify-center ">
             <div>
@@ -104,23 +76,21 @@ function VideoUpload() {
                     onSubmit={handleForm}
                     className="items-center my-2">
 
-                    {/* title */}
                     <div className="mb-3">
                         <div className="pb-2 block">
                             <Label htmlFor="file-upload" value="Upload file" />
                         </div>
-                        <TextInput value={meta.title} onChange={formFieldChange} name="title" id="file-upload" placeholder="Enter title" />
+                        <TextInput onChange={formFieldChange} name="title" id="file-upload" placeholder="Enter title" />
                     </div>
 
-                    {/* descreption */}
+                    {/* textarea */}
                     <div className="mb-3 max-w-md">
                         <div className="mb-2 block">
                             <Label htmlFor="comment" value="Video Description" />
                         </div>
-                        <Textarea value={meta.description} onChange={formFieldChange} name="description" id="comment" placeholder="write a video description" required rows={4} />
+                        <Textarea onChange={formFieldChange} name="description" id="comment" placeholder="write a video description" required rows={4} />
                     </div>
 
-                    {/* file */}
                     <div className="flex justify-center  items-center space-x-6">
                         <div className="shrink-0">
                             <img className="h-16 w-16 object-cover rounded-sm" src={videoLogo} alt="Current profile photo" />
@@ -128,9 +98,7 @@ function VideoUpload() {
 
                         <label className="block">
                             <span className="sr-only">Choose profile photo</span>
-                            <input
-                                ref={selectedFile}
-                                name="file" type="file"
+                            <input name="file" type="file"
                                 onChange={handleFileChange}
                                 className="block w-full text-sm text-slate-500
                             file:mr-4 file:py-2 file:px-4
@@ -140,18 +108,6 @@ function VideoUpload() {
                              hover:file:bg-violet-100"/>
                         </label>
                     </div>
-                    <div className="my-4 " >
-                        {uploading && <Progress progress={progress} textLabel="Uploading" size="lg" labelProgress labelText style={{ padding: '2px' }} />}
-                    </div>
-
-                    <div className="my-4" >
-                        {message && <Alert color="success" onDismiss={() => {
-                            // setSelectedFile("");
-                            setMessage("");
-                        }} >
-                            <span className="font-medium border">File Uploading Successful</span>
-                        </Alert>}
-                    </div>
 
                     <div className="flex justify-center">
                         <Button type="submit">
@@ -160,8 +116,8 @@ function VideoUpload() {
                 </form>
             </div>
 
-        </Card >
-    </div >
+        </Card>
+    </div>
 }
 
 export default VideoUpload;
