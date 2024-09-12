@@ -14,4 +14,5 @@ public interface VideoInterface {
 	Video get(String videoId);
 	Video getByVideoTitle(String videoTitle);
 	List<Video> getAll();
+	String deleteAll();
 }
