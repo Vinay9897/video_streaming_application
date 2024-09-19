@@ -94,7 +94,7 @@ public class VideoImpl implements VideoInterface {
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     // Check if the file is a video based on its extension (e.g., .mp4, .avi)
                     
-                        Files.delete(file);
+                        Files.delete(file);	
                         System.out.println("Deleted video: " + file.getFileName());
                     
                     return FileVisitResult.CONTINUE;
