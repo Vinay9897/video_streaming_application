@@ -22,9 +22,6 @@ function VideoUpload() {
         setMeta({
             ...meta, [event.target.name]: event.target.value
         });
-
-        // console.log(meta.description);
-        // console.log(meta.title)
     }
 
     function handleFileChange(event) {

@@ -5,9 +5,8 @@ import { Toaster } from 'react-hot-toast';
 
 function App() {
   const [count, setCount] = useState(0);
+  const [videoId, setVideoId] = useState("88a78691-cac6-42aa-b570-f40b10ac1196");
 
-  const [videoId, setVideoId] = useState("77a67378-89ad-41b7-a98d-938cacb754bc");
-  debugger
   return (
     <>
       <Toaster />
@@ -15,13 +14,16 @@ function App() {
         <h1 className=" text-2xl font-bold text-gray-700 dark:text-gray-100">
           Welcome to Video Streaming Application
         </h1>
-        <div className='flex w-full justify-around'>
-          <div>
-            debugger
-            {/* <h1 className="text-white">Playing Video</h1> */}
-            <video style={{ width: 500, height: 440, }} src={`http://localhost:8080/app/stream/{videoId}`} controls />
+        <div className=' flex w-full justify-around'>
+          <div className=''>
+            {/* <video style={{ width: 600, height: 400 }} src={`http://localhost:8080/app/stream/range/${videoId}`} controls>
+            </video> */}
+            <VideoUpload src={``}
+            ></VideoUpload>
           </div>
-          <VideoUpload />
+          <div>
+            <VideoUpload />
+          </div>
         </div>
       </div>
     </>
