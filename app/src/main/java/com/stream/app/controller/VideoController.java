@@ -1,8 +1,8 @@
 package com.stream.app.controller;
 
-import java.io.IOException;
+import com.stream.app.constants.*;
+
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -64,9 +64,9 @@ public class VideoController {
 		} else {
 			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED)
 					.body(CustomMessage.builder().message("video has not uploaded").success(false).build());
-
 		}
 	}
+	
 
 	@GetMapping("/stream/{videoId}")
 	public ResponseEntity<Resource> stream(@PathVariable String videoId) {
@@ -99,7 +99,7 @@ public class VideoController {
 			@RequestHeader(value = "Range", required = false) String range, HttpServletResponse response) {
 
 		Video video = videoInterface.get(videoId);
-		Path path = Paths.get("video//" +video.getFilePath());
+		Path path = Paths.get("video//" + video.getFilePath());
 
 		Resource resource = new FileSystemResource(path);
 
@@ -115,8 +115,8 @@ public class VideoController {
 		if (range == null) {
 			return ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType)).body(resource);
 		}
-		
-		//calculate start and end range
+
+		// calculate start and end range
 
 		long rangeStart;
 		long rangeEnd;
@@ -124,53 +124,46 @@ public class VideoController {
 		String[] ranges = range.replace("bytes=", "").split("-");
 
 		rangeStart = Long.parseLong(ranges[0]);
+		rangeEnd = rangeStart + AppConstants.CHUNK_SIZE - 1;
 
-		if (ranges.length > 1)
-			rangeEnd = Long.parseLong(ranges[1]);
-		else
+		if (rangeEnd >= fileLength) {
 			rangeEnd = fileLength - 1;
-		
-		if(rangeEnd > fileLength-1)
-			rangeEnd = fileLength - 1;
-		
+		}
+
 		System.out.println("startrange = " + rangeStart);
 		System.out.println("Endrange = " + rangeEnd);
 		InputStream inputStream = null;
-		
+		byte[] buffer = null;
+		HttpHeaders httpHeaders = new HttpHeaders();
 		try {
-			 inputStream = Files.newInputStream(path);
-			 inputStream.skip(rangeStart);
+			inputStream = Files.newInputStream(path);
+			inputStream.skip(rangeStart);
+
+			long contentLength = rangeEnd - rangeStart + 1;
+			
+			buffer = new byte[(int) contentLength];
+			inputStream.read(buffer,0,buffer.length);
+			
+
+			httpHeaders.add("Content-Range", "bytes " + rangeStart + "-" + rangeEnd + "/" + fileLength);
+			httpHeaders.add("Cache-Control", "no-cache, no-store, must-revalidate");
+			httpHeaders.add("Pragma", "no-cache");
+			httpHeaders.add("Expires", "0");
+			httpHeaders.add("X-Content-Type-Options", "nosniff");
+			httpHeaders.setContentLength(contentLength);
+			
+			
 		}
-//		try {
-//			inputStream = Files.newInputStream(path);
-//			     OutputStream outputStream = response.getOutputStream();
-//
-//			    inputStream.skip(rangeStart);
-//			    byte[] buffer = new byte[10240];  // Adjust buffer size if needed
-//			    long bytesRemaining = rangeEnd - rangeStart + 1;
-//			    int bytesRead;
-//
-//			    while ((bytesRead = inputStream.read(buffer, 0, (int)Math.min(buffer.length, bytesRemaining))) != -1 && bytesRemaining > 0) {
-//			        outputStream.write(buffer, 0, bytesRead);
-//			        bytesRemaining -= bytesRead;
-//			    }
-//			}
-		catch(Exception ex) {
+
+		catch (Exception ex) {
 			ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}
 		
-		long contentLength = rangeEnd - rangeStart+1;
-		HttpHeaders httpHeaders = new HttpHeaders();
-		httpHeaders.add("Content-Range", "bytes "+rangeStart + "-"+rangeEnd + "/" + fileLength);
-		httpHeaders.add("Cache-Control","no-cache, no-store, must-revalidate");
-		httpHeaders.add("Pragma", "no-cache");
-		httpHeaders.add("Expires", "0");
-		httpHeaders.add("X-Content-Type-Options","nosniff");
-		httpHeaders.setContentLength(contentLength);
+		return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).headers(httpHeaders)
+				.contentType(MediaType
+						.parseMediaType(contentType))
+				.body(new ByteArrayResource(buffer));
 
-		return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
-				.headers(httpHeaders)
-				.contentType(MediaType.parseMediaType(contentType))
-				.body(new InputStreamResource(inputStream));
+		
 	}
 }
